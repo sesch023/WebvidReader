@@ -1,8 +1,7 @@
-import torch
 import pandas
 from torch.utils.data import Dataset
 from collections import namedtuple
-from Video import read_video_file
+from WebvidReader.Video import read_video_file
 
 VideoItem = namedtuple("VideoItem", ["Id", "Page", "Caption", "Path"])
 
@@ -30,7 +29,6 @@ class VideoDataset(Dataset):
 
     def __getitem__(self, idx):
         key = self._keys[idx]
-        print((self._video_map[key]).Path)
         video = read_video_file((self._video_map[key]).Path)
         label = self._video_map[key].Caption
         return video, label
