@@ -1,0 +1,10 @@
+README.md
+setup.py
+WebvidReader/Video.py
+WebvidReader/VideoDataset.py
+WebvidReader/__init__.py
+WebvidReader.egg-info/PKG-INFO
+WebvidReader.egg-info/SOURCES.txt
+WebvidReader.egg-info/dependency_links.txt
+WebvidReader.egg-info/requires.txt
+WebvidReader.egg-info/top_level.txt
