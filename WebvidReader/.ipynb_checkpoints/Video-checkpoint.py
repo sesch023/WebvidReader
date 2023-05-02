@@ -34,7 +34,7 @@ def read_video_object(video, start=0, end=None, channels_first=False):
     video = torch.tensor(video_frames)
     
     if channels_first:
-        video = video.permute(2, 0, 1)
+        video = video.permute(0, 3, 1, 2)
     
     return video
 
