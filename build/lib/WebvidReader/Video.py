@@ -1,6 +1,7 @@
 import itertools
 import cv2
 import torch
+import numpy
 
 
 def read_video_file(path, start=0, end=None, channels_first=False):
@@ -31,10 +32,10 @@ def read_video_object(video, start=0, end=None, channels_first=False):
         frame += 1
 
     video.release()
-    video = torch.tensor(video_frames)
+    video = torch.tensor(numpy.array(video_frames))
     
     if channels_first:
-        video = video.permute(2, 0, 1)
+        video = video.permute(0, 3, 1, 2)
     
     return video
 
