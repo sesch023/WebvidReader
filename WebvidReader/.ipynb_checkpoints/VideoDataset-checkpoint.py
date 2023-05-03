@@ -25,7 +25,7 @@ class VideoDataset(Dataset):
         if verbose:
             print("Creating VideoDataset")
         
-        itererator = tqdm(csv.iterrows()) if verbose else csv.iterrows()
+        itererator = tqdm(csv.iterrows(), total=csv.shape[0]) if verbose else csv.iterrows()
         for index, row in itererator:
             path = f"{video_base_path}/{row['page_dir']}/{row['videoid']}.mp4"
             pickle_path = VideoDataset.__get_pickle_path__(pickle_vid_data, pickle_base_path, row['videoid'])
