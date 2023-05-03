@@ -6,6 +6,7 @@ from collections import namedtuple
 from WebvidReader.Video import read_video_file
 import pickle
 import os
+from tqdm import tqdm
 
 VideoItem = namedtuple("VideoItem", ["Id", "Page", "Caption", "Path", "Pickle"])
 
@@ -16,11 +17,16 @@ class VideoDataset(Dataset):
         return f"{pickle_path}/{video_id}.npz" if pickle_vid_data else None
     
     @staticmethod
-    def parse_csv(csv_path, video_base_path, pickle_vid_data=False, pickle_base_path=".video_pickles"):
+    def parse_csv(csv_path, video_base_path, pickle_vid_data=False, pickle_base_path=".video_pickles", verbose=False):
         items = dict()
         csv = pandas.read_csv(csv_path)
         keys = list(csv["videoid"])
-        for index, row in csv.iterrows():
+        
+        if verbose:
+            print("Creating VideoDataset")
+        
+        itererator = tqdm(csv.iterrows()) if verbose else csv.iterrows()
+        for index, row in itererator:
             path = f"{video_base_path}/{row['page_dir']}/{row['videoid']}.mp4"
             pickle_path = VideoDataset.__get_pickle_path__(pickle_vid_data, pickle_base_path, row['videoid'])
             item = VideoItem(Id=row['videoid'], Page=row['page_dir'], Caption=row['name'], Path=path, Pickle=pickle_path)
@@ -28,7 +34,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), pickle_vid_data=False, pickle_base_path="video_pickles"):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
@@ -38,7 +44,7 @@ class VideoDataset(Dataset):
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
         
-        self._video_map, self._keys = self.parse_csv(csv_path, video_base_path, pickle_vid_data, pickle_base_path)
+        self._video_map, self._keys = self.parse_csv(csv_path, video_base_path, pickle_vid_data, pickle_base_path, verbose=verbose)
         self._repickle = False
         
         if pickle_vid_data:
