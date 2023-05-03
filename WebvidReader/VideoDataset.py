@@ -28,7 +28,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=None, pickle_vid_data=False, pickle_base_path="video_pickles"):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), pickle_vid_data=False, pickle_base_path="video_pickles"):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
