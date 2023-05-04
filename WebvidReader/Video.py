@@ -2,6 +2,7 @@ import itertools
 import cv2
 import torch
 import numpy
+import time
 
 
 def read_video_file(path, start=0, end=None, channels_first=False, target_resolution=(426, 240)):
@@ -20,7 +21,9 @@ def read_video_object(video, start=0, end=None, channels_first=False, target_res
 
     video_frames = []
     frame = 0
-
+    
+    start_time = time.time()
+    
     while video.isOpened() and frame <= end:
         ret, frame_data = video.read()
         if not ret:
@@ -36,10 +39,12 @@ def read_video_object(video, start=0, end=None, channels_first=False, target_res
 
     video.release()
     
+    total = time.time() - start_time
+    
     video = numpy.array(video_frames)
     
     if channels_first and len(video.shape) == 4:
         video = video.transpose(0, 3, 2, 1)
     
-    return video
+    return video, total
 

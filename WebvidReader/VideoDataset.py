@@ -7,6 +7,7 @@ from WebvidReader.Video import read_video_file
 import pickle
 import os
 from tqdm import tqdm
+import time
 
 VideoItem = namedtuple("VideoItem", ["Caption", "Path"])
 
@@ -38,6 +39,10 @@ class VideoDataset(Dataset):
         self._video_base_path = video_base_path
         self._pickle_base_path = pickle_base_path
         
+        self._read_times = []
+        self._total_times = []
+        self._cv2_time = []
+        
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
         
@@ -59,6 +64,8 @@ class VideoDataset(Dataset):
         return len(self._video_map)
 
     def __getitem__(self, idx):
+        start_time = time.time()
+        
         key = self._keys[idx]
         video_meta = self._video_map[key]
         pickle_path = f"{self._pickle_base_path}/{video_meta.Path.replace('/', '')}.nbz" if self._pickle_vid_data else None
@@ -72,11 +79,17 @@ class VideoDataset(Dataset):
                 load_pickle = False
         
         if not load_pickle:
-            video = read_video_file(f"{self._video_base_path}/{video_meta.Path}", channels_first=self._channels_first, target_resolution=self._target_resolution)
+            read_video_time = time.time()
+            video, time = read_video_file(f"{self._video_base_path}/{video_meta.Path}", channels_first=self._channels_first, target_resolution=self._target_resolution)
+            self._cv2_time.append(time)
+            self._read_times.append(time.time() - read_video_time)
             if self._pickle_vid_data:
                 with open(pickle_path, "wb") as f:
                     numpy.save(f, video, allow_pickle=False)
                     
         label = video_meta.Caption
-        return torch.Tensor(video), label
+        tensor = torch.Tensor(video)
+        self._total_times.append(time.time() - start_time)
+        
+        return tensor, label
 
