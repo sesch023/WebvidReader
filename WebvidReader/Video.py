@@ -36,8 +36,8 @@ def read_video_object(video, start=0, end=None, channels_first=False):
   
     total = t.time() - start_time
     
-    if channels_first and len(video.shape) == 4:
-        video = video.permute(0, 3, 2, 1)
+    if channels_first and len(key_frames.shape) == 4:
+        key_frames = key_frames.permute(0, 3, 2, 1)
     
-    return video, total
+    return key_frames, total
 
