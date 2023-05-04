@@ -15,7 +15,7 @@ for i in tqdm(range(max_ind)):
     video = dataset_non_pickle[i]
 print("Non Pickle took: " + str(time.perf_counter() - start) + " seconds!")
 
-print(f"Average CV2 Time: {sum(dataset_non_pickle._cv2)/max_ind}")
+print(f"Average CV2 Time: {sum(dataset_non_pickle._cv2_time)/max_ind}")
 print(f"Average Read Time: {sum(dataset_non_pickle._read_times)/max_ind}")
 print(f"Average Total Time: {sum(dataset_non_pickle._total_times)/max_ind}")
 

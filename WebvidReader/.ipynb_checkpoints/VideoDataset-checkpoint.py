@@ -80,8 +80,8 @@ class VideoDataset(Dataset):
         
         if not load_pickle:
             read_video_time = time.time()
-            video, time = read_video_file(f"{self._video_base_path}/{video_meta.Path}", channels_first=self._channels_first, target_resolution=self._target_resolution)
-            self._cv2_time.append(time)
+            video, cv_2time = read_video_file(f"{self._video_base_path}/{video_meta.Path}", channels_first=self._channels_first, target_resolution=self._target_resolution)
+            self._cv2_time.append(cv_2time)
             self._read_times.append(time.time() - read_video_time)
             if self._pickle_vid_data:
                 with open(pickle_path, "wb") as f:
