@@ -10,7 +10,7 @@ setup(
     license='BSD 2-clause',
     packages=['WebvidReader'],
     install_requires=['pandas',
-                      'opencv-python',
+                      'decord',
                       'torch'
                       ],
 
