@@ -67,7 +67,7 @@ class VideoDataset(Dataset):
         
         if load_pickle:
             try:
-                video = torch.Tensor(numpy.load(pickle_path, allow_pickle=False))
+                video = numpy.load(pickle_path, allow_pickle=False)
             except Exception as e:
                 print(f"Warning: Failed to load numpy pickle '{video_meta.Pickle}', falling back to reading the according video file. The cause was: {str(e)}")
                 load_pickle = False
@@ -79,12 +79,15 @@ class VideoDataset(Dataset):
                 video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution)
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
-                        numpy.save(f, video.numpy(), allow_pickle=False)
+                        numpy.save(f, video, allow_pickle=False)
             except Exception as e:
                 print(f"Warning: Failed to load MP4 '{vid_path}', the Data will be returned as None. The cause was: {str(e)}")
                 video = None
                     
         label = video_meta.Caption
+        
+        if video is not None:
+            video = torch.Tensor(video)
         
         return video, label
 
