@@ -1,5 +1,4 @@
 from WebvidReader.VideoDataset import VideoDataset
-import cv2
 import numpy
 import time
 from tqdm import tqdm

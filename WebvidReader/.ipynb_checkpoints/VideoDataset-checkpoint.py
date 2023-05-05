@@ -39,10 +39,6 @@ class VideoDataset(Dataset):
         self._video_base_path = video_base_path
         self._pickle_base_path = pickle_base_path
         
-        self._read_times = []
-        self._total_times = []
-        self._cv2_time = []
-        
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
         
@@ -64,8 +60,6 @@ class VideoDataset(Dataset):
         return len(self._video_map)
 
     def __getitem__(self, idx):
-        start_time = time.time()
-        
         key = self._keys[idx]
         video_meta = self._video_map[key]
         pickle_path = f"{self._pickle_base_path}/{video_meta.Path.replace('/', '')}.nbz" if self._pickle_vid_data else None
@@ -79,16 +73,18 @@ class VideoDataset(Dataset):
                 load_pickle = False
         
         if not load_pickle:
-            read_video_time = time.time()
-            video, cv_2time = read_video_file(f"{self._video_base_path}/{video_meta.Path}", channels_first=self._channels_first, target_resolution=self._target_resolution)
-            self._cv2_time.append(cv_2time)
-            self._read_times.append(time.time() - read_video_time)
-            if self._pickle_vid_data:
-                with open(pickle_path, "wb") as f:
-                    numpy.save(f, video.numpy(), allow_pickle=False)
+            vid_path = f"{self._video_base_path}/{video_meta.Path}"
+            
+            try:
+                video = read_video_file(, channels_first=self._channels_first, target_resolution=self._target_resolution)
+                if self._pickle_vid_data:
+                    with open(pickle_path, "wb") as f:
+                        numpy.save(f, video.numpy(), allow_pickle=False)
+            except Exception as e:
+                print(f"Warning: Failed to load MP4 '{vid_path}', the Data will be returned as None. The cause was: {str(e)}")
+                video = None
                     
         label = video_meta.Caption
-        self._total_times.append(time.time() - start_time)
         
         return video, label
 

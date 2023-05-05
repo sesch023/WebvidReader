@@ -1,5 +1,4 @@
 import itertools
-import cv2
 import torch
 import numpy
 import time as t
@@ -29,15 +28,11 @@ def read_video_object(video, start=0, end=None, channels_first=False):
     video_frames = []
     frame = 0
     
-    start_time = t.time()
-    
     key_indices = video.get_key_indices()
     key_frames = video.get_batch(key_indices)
-  
-    total = t.time() - start_time
     
     if channels_first and len(key_frames.shape) == 4:
         key_frames = key_frames.permute(0, 3, 2, 1)
     
-    return key_frames, total
+    return key_frames
 
