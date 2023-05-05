@@ -76,7 +76,7 @@ class VideoDataset(Dataset):
             vid_path = f"{self._video_base_path}/{video_meta.Path}"
             
             try:
-                video = read_video_file(, channels_first=self._channels_first, target_resolution=self._target_resolution)
+                video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution)
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
                         numpy.save(f, video.numpy(), allow_pickle=False)
