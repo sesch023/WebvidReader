@@ -87,7 +87,7 @@ class VideoDataset(Dataset):
         label = video_meta.Caption
         
         if video is not None:
-            video = torch.Tensor(video)
-        
+            video = torch.Tensor(video).float()
+            
         return video, label
 
