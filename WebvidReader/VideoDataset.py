@@ -69,7 +69,7 @@ class VideoDataset(Dataset):
             try:
                 video = numpy.load(pickle_path, allow_pickle=False)
             except Exception as e:
-                print(f"Warning: Failed to load numpy pickle '{video_meta.Pickle}', falling back to reading the according video file. The cause was: {str(e)}")
+                print(f"Warning: Failed to load numpy pickle '{pickle_path}', falling back to reading the according video file. The cause was: {str(e)}")
                 load_pickle = False
         
         if not load_pickle:
