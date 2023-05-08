@@ -8,7 +8,7 @@ from decord import cpu, gpu
 
 decord.bridge.set_bridge('torch')
 
-def read_video_file(path, start=0, end=None, channels_first=False, target_resolution=(426, 240)):
+def read_video_file(path, start=0, end=None, channels_first=False, target_resolution=(426, 240), broken_frame_warning_only=True):
     if target_resolution is not None:
         video = VideoReader(path, ctx=cpu(1), width=target_resolution[0], height=target_resolution[1])
     else:
@@ -16,7 +16,7 @@ def read_video_file(path, start=0, end=None, channels_first=False, target_resolu
     return read_video_object(video, start, end, channels_first)
 
 
-def read_video_object(video, start=0, end=None, channels_first=False):
+def read_video_object(video, start=0, end=None, channels_first=False, broken_frame_warning_only=True):
     if end is None:
         end = float("inf")
     if end < start:
@@ -26,13 +26,20 @@ def read_video_object(video, start=0, end=None, channels_first=False):
         )
 
     video_frames = []
-    frame = 0
     
-    key_indices = video.get_key_indices()
-    key_frames = video.get_batch(key_indices)
+    for i in range(min(len(video), end)):
+        try:
+            video_frames.append(video[i])
+        except Exception as e:
+            if(broken_frame_warning_only):
+                print(f"Warning: Failed to load frame '{i}' of video, frame will be skipped. The cause was: {str(e)}")
+            else:
+                raise RuntimeError(f"Warning: Failed to load frame '{i}' of video. The cause was: {str(e)}")
+            
     
-    if channels_first and len(key_frames.shape) == 4:
-        key_frames = key_frames.permute(0, 3, 2, 1)
-    
-    return key_frames
+    video_frames = torch.Tensor(video_frames)
+    if channels_first and len(video_frames.shape) == 4:
+        video_frames = video_frames.permute(0, 3, 2, 1)
+        
+    return video_frames
 
