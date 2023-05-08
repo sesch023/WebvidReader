@@ -51,7 +51,7 @@ class VideoDataset(Dataset):
             if os.path.isfile(dataset_pickle):
                 with open(dataset_pickle, "rb") as f:
                     old = pickle.load(f)
-                if not(channels_first == old._channels_first and target_resolution == old._target_resolution and csv_path == old._csv_path and video_base_path == old._video_base_path):
+                if not(channels_first == old._channels_first and target_resolution == old._target_resolution and csv_path == old._csv_path and video_base_path == old._video_base_path and max_frames_per_vid == old._max_frames_per_vid):
                     self._repickle = True
             with open(dataset_pickle, "wb") as f:
                 pickle.dump(self, f)
