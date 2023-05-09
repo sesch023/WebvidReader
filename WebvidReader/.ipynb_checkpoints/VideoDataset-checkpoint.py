@@ -3,7 +3,7 @@ import torch
 import numpy
 from torch.utils.data import Dataset
 from collections import namedtuple
-from WebvidReader.Video import read_video_file
+from WebvidReader.Video import read_video_file, write_video_object
 import pickle
 import os
 from tqdm import tqdm
@@ -30,7 +30,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, max_frames_per_vid=None):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, max_frames_per_vid=None):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
@@ -39,6 +39,7 @@ class VideoDataset(Dataset):
         self._video_base_path = video_base_path
         self._pickle_base_path = pickle_base_path
         self._max_frames_per_vid = max_frames_per_vid
+        self._crop_frames = crop_frames
         
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
@@ -77,7 +78,7 @@ class VideoDataset(Dataset):
             vid_path = f"{self._video_base_path}/{video_meta.Path}"
             
             try:
-                video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution, end=self._max_frames_per_vid)
+                video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution, end=self._max_frames_per_vid, crop_frames=self._crop_frames)
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
                         numpy.save(f, video, allow_pickle=False)
@@ -91,4 +92,11 @@ class VideoDataset(Dataset):
             video = torch.Tensor(video).float()
             
         return video, label
+    
+    
+    def write_item(self, idx, path):
+        video, label = self.__getitem__(idx)
+        target_resolution= self._crop_frames if self._crop_frames is not None else self._target_resolution
+        write_video_object(path, video, channels_first=self._channels_first, target_resolution=target_resolution)
+        
 

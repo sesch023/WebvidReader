@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='WebvidReader',
-    version='0.1.4',
+    version='0.1.5',
     description='A package for reading the Webvid Dataset.',
     url='https://github.com/sesch023/WebvidReader',
     author='Sebastian Schmidt',
