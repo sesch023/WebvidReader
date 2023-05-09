@@ -11,7 +11,8 @@ setup(
     packages=['WebvidReader'],
     install_requires=['pandas',
                       'decord',
-                      'torch'
+                      'torch',
+                      'opencv-python'
                       ],
 
     classifiers=[

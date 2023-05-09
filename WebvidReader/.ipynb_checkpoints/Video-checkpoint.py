@@ -10,6 +10,12 @@ import torchvision.transforms as transforms
 
 decord.bridge.set_bridge('torch')
 
+class IllegalStartException(Exception):
+    pass
+
+class IllegalFrameException(Exception):
+    pass
+
 def read_video_file(path, start=0, end=None, channels_first=False, target_resolution=(426, 240), crop_frames=None, broken_frame_warning_only=True):
     if target_resolution is not None:
         video = VideoReader(path, ctx=cpu(1), width=target_resolution[0], height=target_resolution[1])
@@ -35,7 +41,7 @@ def read_video_object(video, start=0, end=None, channels_first=False, crop_frame
         try:
             video.seek(start)
         except Exception as e:
-            raise RuntimeError(f"Error: Failed to seek start frame '{start}' of video. The video is likely shorter than '{start}' frames. The cause was: {str(e)}")
+            raise IllegalStartException(f"Error: Failed to seek start frame '{start}' of video. The video is likely shorter than '{start}' frames. The cause was: {str(e)}")
         for i in range(min(len(video), end)):
             try:
                 video_frames.append(video.next())   
@@ -43,7 +49,7 @@ def read_video_object(video, start=0, end=None, channels_first=False, crop_frame
                 if(broken_frame_warning_only):
                     print(f"Warning: Failed to load frame '{i}' of video, frame will be skipped. The cause was: {str(e)}")
                 else:
-                    raise RuntimeError(f"Error: Failed to load frame '{i}' of video. The cause was: {str(e)}")
+                    raise IllegalFrameException(f"Error: Failed to load frame '{i}' of video. The cause was: {str(e)}")
         
         video_frames = torch.stack(video_frames)
         
