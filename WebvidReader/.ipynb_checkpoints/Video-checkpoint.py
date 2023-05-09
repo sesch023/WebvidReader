@@ -32,7 +32,10 @@ def read_video_object(video, start=0, end=None, channels_first=False, crop_frame
     except Exception as e:
         print(f"Warning: Failed read video as batch, going to frame by frame reading. The cause was: {str(e)}")
         video_frames = []
-        video.seek(0)
+        try:
+            video.seek(start)
+        except Exception as e:
+            raise RuntimeError(f"Error: Failed to seek start frame '{start}' of video. The video is likely shorter than '{start}' frames. The cause was: {str(e)}")
         for i in range(min(len(video), end)):
             try:
                 video_frames.append(video.next())   
