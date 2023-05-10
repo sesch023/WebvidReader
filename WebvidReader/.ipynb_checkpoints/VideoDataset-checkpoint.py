@@ -3,7 +3,7 @@ import torch
 import numpy
 from torch.utils.data import Dataset
 from collections import namedtuple
-from WebvidReader.Video import read_video_file, write_video_object
+from WebvidReader.Video import read_video_file, write_video_object, read_video_file_as_parts
 import pickle
 import os
 from tqdm import tqdm
@@ -30,7 +30,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, max_frames_per_vid=None):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, max_frames_per_part=None, first_frame_only=True, nth_frames=1):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
@@ -38,8 +38,10 @@ class VideoDataset(Dataset):
         self._pickle_vid_data = pickle_vid_data
         self._video_base_path = video_base_path
         self._pickle_base_path = pickle_base_path
-        self._max_frames_per_vid = max_frames_per_vid
+        self._max_frames_per_part = max_frames_per_part
         self._crop_frames = crop_frames
+        self._nth_frames = nth_frames
+        self._first_frame_only = first_frame_only
         
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
@@ -52,7 +54,7 @@ class VideoDataset(Dataset):
             if os.path.isfile(dataset_pickle):
                 with open(dataset_pickle, "rb") as f:
                     old = pickle.load(f)
-                if not(channels_first == old._channels_first and target_resolution == old._target_resolution and csv_path == old._csv_path and video_base_path == old._video_base_path and max_frames_per_vid == old._max_frames_per_vid):
+                if not(channels_first == old._channels_first and target_resolution == old._target_resolution and csv_path == old._csv_path and video_base_path == old._video_base_path and max_frames_per_part == old._max_frames_per_part and first_frame_only == old._first_frame_only):
                     self._repickle = True
             with open(dataset_pickle, "wb") as f:
                 pickle.dump(self, f)
@@ -78,7 +80,11 @@ class VideoDataset(Dataset):
             vid_path = f"{self._video_base_path}/{video_meta.Path}"
             
             try:
-                video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution, end=self._max_frames_per_vid, crop_frames=self._crop_frames)
+                if self._first_frame_only:
+                    video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution, end=self._max_frames_per_part, crop_frames=self._crop_frames, nth_frames=self._nth_frames)
+                else:
+                    video = read_video_file_as_parts(vid_path, self._max_frames_per_part, channels_first=self._channels_first, target_resolution=self._target_resolution, crop_frames=self._crop_frames, nth_frames=self._nth_frames)
+                    
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
                         numpy.save(f, video, allow_pickle=False)
@@ -88,8 +94,11 @@ class VideoDataset(Dataset):
                     
         label = video_meta.Caption
         
-        if video is not None:
+        if self._first_frame_only and video is not None:
             video = torch.Tensor(video).float()
+        elif not self._first_frame_only:
+            for i in range(len(video)):
+                video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
             
         return video, label
     
@@ -97,6 +106,13 @@ class VideoDataset(Dataset):
     def write_item(self, idx, path):
         video, label = self.__getitem__(idx)
         target_resolution= self._crop_frames if self._crop_frames is not None else self._target_resolution
-        write_video_object(path, video, channels_first=self._channels_first, target_resolution=target_resolution)
+        
+        if not isinstance(video, list):
+            write_video_object(path, video, channels_first=self._channels_first, target_resolution=target_resolution)
+        else:
+            path_f = path[:-4] + "_{num}" + path[-4:]
+            for i in range(len(video)):
+                path_c = path_f.format(num=i)
+                write_video_object(path_c, video[i], channels_first=self._channels_first, target_resolution=target_resolution)
         
 
