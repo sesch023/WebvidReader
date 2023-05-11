@@ -94,11 +94,12 @@ class VideoDataset(Dataset):
                     
         label = video_meta.Caption
         
-        if self._first_frame_only and video is not None:
-            video = torch.Tensor(video).float()
-        elif not self._first_frame_only:
-            for i in range(len(video)):
-                video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
+        if video is not None:
+            if self._first_frame_only:
+                video = torch.Tensor(video).float()
+            else:
+                for i in range(len(video)):
+                    video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
             
         return video, label
     
