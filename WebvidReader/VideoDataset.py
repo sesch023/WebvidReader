@@ -71,7 +71,8 @@ class VideoDataset(Dataset):
         
         if load_pickle:
             try:
-                video = numpy.load(pickle_path, allow_pickle=False)
+                with open(pickle_path, "rb") as f:
+                    video = pickle.load(f)
             except Exception as e:
                 print(f"Warning: Failed to load numpy pickle '{pickle_path}', falling back to reading the according video file. The cause was: {str(e)}")
                 load_pickle = False
@@ -87,7 +88,7 @@ class VideoDataset(Dataset):
                     
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
-                        numpy.save(f, video, allow_pickle=False)
+                        pickle.dump(video, f)
             except Exception as e:
                 print(f"Warning: Failed to load MP4 '{vid_path}', the Data will be returned as None. The cause was: {str(e)}")
                 video = None
