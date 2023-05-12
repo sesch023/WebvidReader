@@ -30,7 +30,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, max_frames_per_part=None, first_frame_only=True, nth_frames=1):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, first_frame_only=True, max_frames_per_part=float("inf"), min_frames_per_part=0, nth_frames=1):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
@@ -39,6 +39,7 @@ class VideoDataset(Dataset):
         self._video_base_path = video_base_path
         self._pickle_base_path = pickle_base_path
         self._max_frames_per_part = max_frames_per_part
+        self._min_frames_per_part = min_frames_per_part
         self._crop_frames = crop_frames
         self._nth_frames = nth_frames
         self._first_frame_only = first_frame_only
@@ -54,11 +55,13 @@ class VideoDataset(Dataset):
             if os.path.isfile(dataset_pickle):
                 with open(dataset_pickle, "rb") as f:
                     old = pickle.load(f)
-                if not(channels_first == old._channels_first and target_resolution == old._target_resolution and csv_path == old._csv_path and video_base_path == old._video_base_path and max_frames_per_part == old._max_frames_per_part and first_frame_only == old._first_frame_only):
+                if not(self.__old_equals_self__(old)):
                     self._repickle = True
             with open(dataset_pickle, "wb") as f:
                 pickle.dump(self, f)
-        
+    
+    def __old_equals_self__(self, old):
+        return (self._channels_first == old._channels_first and self._target_resolution == old._target_resolution and self._csv_path == old._csv_path and self._video_base_path == old._video_base_path and self._max_frames_per_part == old._max_frames_per_part and self._first_frame_only == old._first_frame_only and self._min_frames_per_part == old._min_frames_per_part)
 
     def __len__(self):
         return len(self._video_map)
@@ -83,8 +86,10 @@ class VideoDataset(Dataset):
             try:
                 if self._first_frame_only:
                     video = read_video_file(vid_path, channels_first=self._channels_first, target_resolution=self._target_resolution, end=self._max_frames_per_part, crop_frames=self._crop_frames, nth_frames=self._nth_frames)
+                    video = None if video.shape[0] < self._min_frames_per_part else video
                 else:
                     video = read_video_file_as_parts(vid_path, self._max_frames_per_part, channels_first=self._channels_first, target_resolution=self._target_resolution, crop_frames=self._crop_frames, nth_frames=self._nth_frames)
+                    video = list(filter(lambda el: el.shape[0] >= self._min_frames_per_part, video)) if self._min_frames_per_part > 0 else video
                     
                 if self._pickle_vid_data:
                     with open(pickle_path, "wb") as f:
