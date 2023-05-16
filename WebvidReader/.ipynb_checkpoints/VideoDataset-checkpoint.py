@@ -109,7 +109,7 @@ class VideoDataset(Dataset):
                 for i in range(len(video)):
                     video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
             if self._normalize:
-                video = normalize(video)
+                video = torch.add(torch.mul(normalize(video, p=1), 2), -1)
             
         return video, label
     
