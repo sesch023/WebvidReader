@@ -8,6 +8,7 @@ import pickle
 import os
 from tqdm import tqdm
 import time
+from torch.nn.functional import normalize
 
 VideoItem = namedtuple("VideoItem", ["Caption", "Path"])
 
@@ -30,7 +31,7 @@ class VideoDataset(Dataset):
 
         return items, keys
 
-    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, first_frame_only=True, max_frames_per_part=float("inf"), min_frames_per_part=0, nth_frames=1):
+    def __init__(self, csv_path, video_base_path, channels_first=False, target_resolution=(426, 240), crop_frames=None, pickle_vid_data=False, pickle_base_path="video_pickles", verbose=True, first_frame_only=True, max_frames_per_part=float("inf"), min_frames_per_part=0, nth_frames=1, normalize=True):
         self._csv_path = csv_path
         self._video_base_path = video_base_path
         self._channels_first = channels_first
@@ -43,6 +44,7 @@ class VideoDataset(Dataset):
         self._crop_frames = crop_frames
         self._nth_frames = nth_frames
         self._first_frame_only = first_frame_only
+        self._normalize = normalize
         
         if pickle_vid_data and not os.path.exists(pickle_base_path):
             os.makedirs(pickle_base_path)
@@ -61,7 +63,7 @@ class VideoDataset(Dataset):
                 pickle.dump(self, f)
     
     def __old_equals_self__(self, old):
-        return (self._channels_first == old._channels_first and self._target_resolution == old._target_resolution and self._csv_path == old._csv_path and self._video_base_path == old._video_base_path and self._max_frames_per_part == old._max_frames_per_part and self._first_frame_only == old._first_frame_only and self._min_frames_per_part == old._min_frames_per_part)
+        return (self._channels_first == old._channels_first and self._target_resolution == old._target_resolution and self._csv_path == old._csv_path and self._video_base_path == old._video_base_path and self._max_frames_per_part == old._max_frames_per_part and self._first_frame_only == old._first_frame_only and self._min_frames_per_part == old._min_frames_per_part and self._normalize == old._normalize)
 
     def __len__(self):
         return len(self._video_map)
@@ -106,6 +108,8 @@ class VideoDataset(Dataset):
             else:
                 for i in range(len(video)):
                     video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
+            if self._normalize:
+                video = normalize(video)
             
         return video, label
     
