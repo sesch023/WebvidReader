@@ -118,6 +118,9 @@ class VideoDataset(Dataset):
         video, label = self.__getitem__(idx)
         target_resolution= self._crop_frames if self._crop_frames is not None else self._target_resolution
         
+        if self._normalize:
+            video = torch.mul(torch.add(video, 1), 255/2)
+        
         if not isinstance(video, list):
             write_video_object(path, video, channels_first=self._channels_first, target_resolution=target_resolution)
         else:
