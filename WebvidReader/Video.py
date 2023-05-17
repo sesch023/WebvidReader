@@ -113,7 +113,8 @@ def write_video_object(path, torch_data, channels_first=False, target_resolution
     fourcc = cv2.VideoWriter_fourcc(*writing_codec)
     out = cv2.VideoWriter(path, fourcc, fps, target_resolution)
     for i in range(torch_data.shape[0]):
-        out.write(numpy.uint8(torch_data[i].numpy()))
+        frame = cv2.cvtColor(numpy.uint8(torch_data[i].numpy()), cv2.COLOR_RGB2BGR)
+        out.write(frame)
         
     out.release()
 
