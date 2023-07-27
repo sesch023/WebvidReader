@@ -2,3 +2,4 @@ pandas
 decord
 torch
 opencv-python
+einops

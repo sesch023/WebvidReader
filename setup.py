@@ -12,7 +12,8 @@ setup(
     install_requires=['pandas',
                       'decord',
                       'torch',
-                      'opencv-python'
+                      'opencv-python',
+                      'einops'
                       ],
 
     classifiers=[

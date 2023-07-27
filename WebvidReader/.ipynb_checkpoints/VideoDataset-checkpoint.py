@@ -64,11 +64,11 @@ class VideoDataset(Dataset):
     def __old_equals_self__(self, old):
         return (self._channels_first == old._channels_first and self._target_resolution == old._target_resolution and self._csv_path == old._csv_path and self._video_base_path == old._video_base_path and self._max_frames_per_part == old._max_frames_per_part and self._first_frame_only == old._first_frame_only and self._min_frames_per_part == old._min_frames_per_part and self._normalize == old._normalize)
 
-    def __normalize_frame__(self, frame):
-        return torch.add(torch.div(frame, 255/2), -1) 
+    def normalize(self, data):
+        return torch.add(torch.div(data, 255/2), -1) 
     
-    def __normalize_to_image(self, video):
-        return torch.mul(torch.add(video, 1), 255/2)
+    def reverse_normalize(self, data):
+        return torch.mul(torch.add(data, 1), 255/2)
     
     def __len__(self):
         return len(self._video_map)
@@ -111,19 +111,21 @@ class VideoDataset(Dataset):
             if self._first_frame_only:
                 video = torch.Tensor(video).float()
                 if self._normalize:
-                    video = self.__normalize_frame__(video)
+                    video = self.normalize(video)
             else:
                 for i in range(len(video)):
                     video[i] = torch.Tensor(video[i]).float() if video[i] is not None else None
                     if video[i] is not None and self._normalize:
-                        video[i] = self.__normalize_frame__(video[i])
+                        video[i] = self.normalize(video[i])
             
         return video, label
     
     
     def write_item(self, idx, path):
         video, label = self.__getitem__(idx)
-        
+        self.write_video(video, path)
+
+    def write_video(self, video, path):
         if video is None or (isinstance(video, list) and any(map(lambda x: x is None, video))):
             print("Warning: Cannot write video with missing parts.")
         
@@ -131,14 +133,14 @@ class VideoDataset(Dataset):
         
         if not isinstance(video, list):
             if self._normalize:
-                video = self.__normalize_to_image(video)
+                video = self.reverse_normalize(video)
             
             write_video_object(path, video, channels_first=self._channels_first, target_resolution=target_resolution)
         else:
             path_f = path[:-4] + "_{num}" + path[-4:]
             for i in range(len(video)):
                 if video[i] is not None and self._normalize:
-                    video[i] = self.__normalize_to_image(video[i])
+                    video[i] = self.reverse_normalize(video[i])
                 path_c = path_f.format(num=i)
                 write_video_object(path_c, video[i], channels_first=self._channels_first, target_resolution=target_resolution)
         

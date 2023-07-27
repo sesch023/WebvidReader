@@ -7,6 +7,7 @@ import cv2
 from decord import VideoReader
 from decord import cpu, gpu
 import torchvision.transforms as transforms
+from einops import rearrange
 
 decord.bridge.set_bridge('torch')
 
@@ -24,12 +25,12 @@ def _get_video_reader(path, target_resolution):
         
     return video
 
-def read_video_file(path, start=0, end=None, channels_first=False, target_resolution=(426, 240), crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
+def read_video_file(path, start=0, end=None, target_ordering="c t h w", target_resolution=(426, 240), crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
     video = _get_video_reader(path, target_resolution)
-    return read_video_object(video, start, end, channels_first, crop_frames, nth_frames, broken_frame_warning_only)
+    return read_video_object(video, start, end, target_ordering, crop_frames, nth_frames, broken_frame_warning_only)
 
 
-def read_video_object(video, start=0, end=None, channels_first=False, crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
+def read_video_object(video, start=0, end=None, target_ordering="c t h w", crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
     # End is excluded
     if end is None:
         end = float("inf")
@@ -39,6 +40,7 @@ def read_video_object(video, start=0, end=None, channels_first=False, crop_frame
             f"start time={start} and end time={end}"
         )
     
+    fps = video.get_avg_fps()
     frames_taken = range(start, min(len(video), end), nth_frames)
     try:
         video_frames = video.get_batch(frames_taken)
@@ -70,27 +72,28 @@ def read_video_object(video, start=0, end=None, channels_first=False, crop_frame
         video_frames = transform(video_frames)
         video_frames = video_frames.permute(0, 3, 2, 1)
     
-    if channels_first and len(video_frames.shape) == 4:
-        video_frames = video_frames.permute(0, 3, 2, 1)
-    elif len(video_frames.shape) == 4:
-        video_frames = video_frames.permute(0, 2, 1, 3)
-    
-    return video_frames
+    if len(video_frames.shape) == 3:
+        video_frames = video_frames.unsqueeze(0)
+
+    video_frames = rearrange(video_frames, f"t h w c -> {target_ordering}")
+    return video_frames, fps
 
 
-def read_video_file_as_parts(path, frames_per_part, channels_first=False, target_resolution=(426, 240), crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
+def read_video_file_as_parts(path, frames_per_part, target_ordering="c t h w", target_resolution=(426, 240), crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
     video = _get_video_reader(path, target_resolution)
-    return read_video_object_as_parts(video, frames_per_part, channels_first, crop_frames, nth_frames, broken_frame_warning_only)
+    return read_video_object_as_parts(video, frames_per_part, target_ordering, crop_frames, nth_frames, broken_frame_warning_only)
 
 
-def read_video_object_as_parts(video, frames_per_part, channels_first=False, crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
+def read_video_object_as_parts(video, frames_per_part, target_ordering="c t h w", crop_frames=None, nth_frames = 1, broken_frame_warning_only=True):
     start = 0
     end = frames_per_part
     frames = []
+    frame_fps = []
     
     while(True):
-        frame = read_video_object(video, start, end, channels_first, crop_frames, nth_frames, broken_frame_warning_only)
-        frames.append(frame)             
+        frame, fps = read_video_object(video, start, end, target_ordering, crop_frames, nth_frames, broken_frame_warning_only)
+        frames.append(frame)  
+        frame_fps.append(fps)           
         
         if frames_per_part is None or frame.shape[0] < frames_per_part:
             break
@@ -98,14 +101,11 @@ def read_video_object_as_parts(video, frames_per_part, channels_first=False, cro
         start = end
         end += frames_per_part
     
-    return frames
+    return frames, frame_fps
 
 
-def write_video_object(path, torch_data, channels_first=False, target_resolution=None, fps=25, writing_codec='mp4v'):
-    if channels_first:
-        torch_data = torch_data.permute(0, 3, 2, 1)
-    else:
-        torch_data = torch_data.permute(0, 2, 1, 3)
+def write_video_object(path, torch_data, video_ordering="c t h w", target_resolution=None, fps=25, writing_codec='mp4v'):
+    torch_data = rearrange(torch_data, f"{video_ordering} -> t h w c")
     
     if target_resolution is None:
         target_resolution = (torch_data.shape[2], torch_data.shape[1])
