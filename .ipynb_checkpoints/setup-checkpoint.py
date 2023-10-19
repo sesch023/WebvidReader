@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='WebvidReader',
-    version='0.1.9',
+    version='0.1.10',
     description='A package for reading the Webvid Dataset.',
     url='https://github.com/sesch023/WebvidReader',
     author='Sebastian Schmidt',
@@ -12,7 +12,8 @@ setup(
     install_requires=['pandas',
                       'decord',
                       'torch',
-                      'opencv-python'
+                      'opencv-python',
+                      'einops'
                       ],
 
     classifiers=[
