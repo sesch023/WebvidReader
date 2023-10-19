@@ -67,9 +67,17 @@ class VideoDataset(Dataset):
         return (self._target_ordering == old._target_ordering and self._target_resolution == old._target_resolution and self._csv_path == old._csv_path and self._video_base_path == old._video_base_path and self._max_frames_per_part == old._max_frames_per_part and self._first_part_only == old._first_part_only and self._min_frames_per_part == old._min_frames_per_part and self._normalize == old._normalize)
 
     def normalize(self, data):
-        return torch.add(torch.div(data, 255/2), -1) 
+        return VideoDataset.normalize(data)
     
     def reverse_normalize(self, data):
+        return VideoDataset.reverse_normalize(data)
+    
+    @staticmethod
+    def normalize(data):
+        return torch.add(torch.div(data, 255/2), -1) 
+    
+    @staticmethod
+    def reverse_normalize(data):
         return torch.mul(torch.add(data, 1), 255/2)
     
     def __len__(self):
