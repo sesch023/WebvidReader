@@ -1,6 +1,6 @@
 video_pickles/
 build/
-/.ipynb_checkpoints/
-/.idea/
+.ipynb_checkpoints/
+.idea/
 *.mp4
 
