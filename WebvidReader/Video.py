@@ -9,6 +9,9 @@ from decord import cpu, gpu
 import torchvision.transforms as transforms
 from einops import rearrange
 
+# Set the decord backend to torch
+# This is hardcoded because we never used
+# a different backend in the project
 decord.bridge.set_bridge('torch')
 
 class IllegalStartException(Exception):
