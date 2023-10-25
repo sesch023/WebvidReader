@@ -9,11 +9,11 @@ setup(
     author_email='schmidt.sebastian2@fh-swf.de',
     license='BSD 2-clause',
     packages=['WebvidReader'],
-    install_requires=['pandas',
-                      'decord',
-                      'torch',
-                      'opencv-python',
-                      'einops'
+    install_requires=['pandas==1.5.3',
+                      'decord==0.6.0',
+                      'torch==2.0.0',
+                      'opencv-python==4.8.0.74',
+                      'einops==0.7.0'
                       ],
 
     classifiers=[
