@@ -3,4 +3,5 @@ build/
 .ipynb_checkpoints/
 .idea/
 *.mp4
+.vscode/
 
